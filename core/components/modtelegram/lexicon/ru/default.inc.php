@@ -4,6 +4,15 @@ include_once 'errors.inc.php';
 include_once 'setting.inc.php';
 
 $_lang['modtelegram'] = 'modtelegram';
+$_lang['modtelegram_helper'] = 'Помощник';
+
+
+$_lang['modtelegram_chat_welcome'] = 'Приветствую!';
+$_lang['modtelegram_chat_initialize'] = 'Начать чат';
+$_lang['modtelegram_chat_message'] = 'Введите сообщение...';
+$_lang['modtelegram_chat_sendmessage'] = 'Отправить сообщение';
+$_lang['modtelegram_chat_attachfile'] = 'Отправить файл';
+
 
 // actions
 
@@ -27,13 +36,13 @@ $_lang['modtelegram_description_action_history'] = '[[+action]] - получит
 $_lang['modtelegram_description_action_reply'] = '[[+action]] - написать в чат';
 $_lang['modtelegram_description_action_status'] = '[[+action]] - статус';
 $_lang['modtelegram_description_action_location'] = '[[+action]] - получить локацию';
-
+$_lang['modtelegram_description_action_removeall'] = '[[+action]] - удалить все данные';
 
 // info
 
 $_lang['modtelegram_chatin'] = '/chatin_[[+uid]]';
 $_lang['modtelegram_history'] = '[[+sender]]: [[+data]] - [[+message]]';
-$_lang['modtelegram_status'] = '[[+id]]: [[+active]]';
+$_lang['modtelegram_status'] = '[[+user_username]]: статус - [[+active]], чатов - [[+chat_count]]';
 $_lang['modtelegram_location'] = '[[+region.name_ru]], [[+city.name_ru]] [ [[+ip]] ]';
 
 $_lang['modtelegram_default_user'] = 'Пользователь';
@@ -61,7 +70,8 @@ $_lang['modtelegram_hook_info_failure_status'] = 'Ошибка получени�
 $_lang['modtelegram_hook_info_success_location'] = 'Локация пользователя';
 $_lang['modtelegram_hook_info_failure_location'] = 'Ошибка получения локации';
 
-
+$_lang['modtelegram_hook_info_success_removeall'] = 'Данные успешно удалены';
+$_lang['modtelegram_hook_info_failure_removeall'] = 'Ошибка удаления данных';
 
 
 $_lang['modtelegram_chatin_manager_info_failure_initialize'] = '';
@@ -74,7 +84,11 @@ $_lang['modtelegram_chatin_user_info_failure_sendmessage'] = 'Ошибка от�
 $_lang['modtelegram_chatin_user_info_success_sendmessage'] = '';
 
 
-$_lang['modtelegram_chat_user_info_failure_initialize'] = 'Нет доступных менеджеров';
-$_lang['modtelegram_chat_user_info_success_initialize'] = 'Приветствую, чем могу вам помочь?';
+$_lang['modtelegram_event_user_chatout_success'] = 'Пользователь покинул чат /chatout_[[+uid]]';
+$_lang['modtelegram_event_user_chatout_failure'] = '';
+
+
+//$_lang['modtelegram_chat_user_info_failure_initialize'] = 'Нет доступных менеджеров';
+//$_lang['modtelegram_chat_user_info_success_initialize'] = 'Приветствую, чем могу вам помочь?';
 
 

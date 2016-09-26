@@ -57,6 +57,8 @@ class modtelegram
             'assetsBasePath'  => MODX_ASSETS_PATH,
             'assetsBaseUrl'   => MODX_ASSETS_URL,
             'assetsPath'      => $assetsPath,
+            'lexiconPath'     => $assetsPath . 'js/web/lexicon.js',
+            'lexiconUrl'      => $assetsUrl . 'js/web/lexicon.js',
             'assetsUrl'       => $assetsUrl,
             'actionUrl'       => $assetsUrl . 'action.php',
             'hookUrl'         => $assetsUrl . 'webhook.php',
@@ -401,6 +403,42 @@ class modtelegram
         $properties = array_merge($this->config, $properties);
         $pls = $this->makePlaceholders($properties);
 
+        if (
+            $properties['frontendLexicon']
+            AND
+            !file_exists(str_replace($pls['pl'], $pls['vl'], $properties['lexiconPath']))
+        ) {
+            $topics = $this->explodeAndClean($properties['frontendLexicon']);
+            foreach ($topics as $topic) {
+                $this->modx->lexicon->load($topic);
+            }
+            $entries = $this->modx->lexicon->fetch('modtelegram');
+            $lexicon = '
+			modTelegramLexicon = {';
+            $s = '';
+            while (list($k, $v) = each($entries)) {
+                $s .= "'$k': " . '"' . strtr($v, array(
+                        '\\' => '\\\\',
+                        "'"  => "\\'",
+                        '"'  => '\\"',
+                        "\r" => '\\r',
+                        "\n" => '\\n',
+                        '</' => '<\/'
+                    )) . '",';
+            }
+            $s = trim($s, ',');
+            $lexicon .= $s . '
+			};';
+
+            if (!file_put_contents($properties['lexiconPath'], preg_replace("#[\r\n\t]+#is", ' ', $lexicon))) {
+                $properties['frontendLexicon'] = null;
+            }
+        }
+
+        if ($properties['frontendLexicon']) {
+            $this->modx->regClientScript(str_replace($pls['pl'], $pls['vl'], $properties['lexiconUrl']));
+        }
+
         if ($properties['frontendJs']) {
             $this->modx->regClientScript(str_replace($pls['pl'], $pls['vl'], $properties['frontendJs']));
         }
@@ -419,9 +457,8 @@ class modtelegram
 
         $config['pusher']['active'] = (bool)$this->getOption('pusher_active');
         $config['pusher']['key'] = $this->getOption('pusher_key');
-        $config['pusher']['cluster'] = $this->getOption('pusher_cluster');
         $config['pusher']['channel'] = session_id();
-
+        
         $this->modx->regClientStartupScript("<script type=\"text/javascript\">modTelegramConfig={$this->modx->toJSON($config)};</script>",
             true);
     }
@@ -1056,6 +1093,11 @@ class modtelegram
         }
 
         $data = $this->request($mode, $params);
+        if ($data !== true) {
+            $this->log('SetWebHook failure', $data, true);
+        } else {
+            $this->log('SetWebHook success', $data, true);
+        }
 
         return $data;
     }
@@ -1233,8 +1275,12 @@ class modtelegram
             $user = $this->modx->getObject($this->classModUser, $q)
             AND
             $user->passwordMatches($password)
+            AND
+            $user->isMember('Telegram Manager')
         ) {
             $user = $user->get('id');
+        } else {
+            $user = null;
         }
 
         return $user;
@@ -1331,7 +1377,6 @@ class modtelegram
                 $this->getOption('pusher_secret', null),
                 $this->getOption('pusher_id', null),
                 array(
-                    'cluster'   => $this->getOption('pusher_cluster', null),
                     'encrypted' => (bool)$this->getOption('pusher_encrypted', null),
                 )
             );
@@ -1381,7 +1426,6 @@ class modtelegram
 
             $pusher = $this->loadPusher();
             $pusher->trigger($uid, 'getmessage', $data);
-
         }
 
         return $save;
@@ -1420,13 +1464,13 @@ class modtelegram
      *
      * @return array|mixed
      */
-    public function getUserData($id = 0)
+    public function getUserData($id = 0, $cache = true)
     {
         $tmp = array(
             'cache_key' => 'users/user_' . $id,
             'cacheTime' => 0,
         );
-        if (!$data = $this->getCache($tmp)) {
+        if (!$data = $this->getCache($tmp) OR !$cache) {
             $data = array();
 
             if (!empty($id)) {
@@ -1466,17 +1510,19 @@ class modtelegram
      *
      * @return array|mixed
      */
-    public function getManagerData($id = 0)
+    public function getManagerData($id = 0, $cache = true)
     {
         $tmp = array(
             'cache_key' => 'managers/manager_' . $id,
             'cacheTime' => 0,
         );
-        if (!$data = $this->getCache($tmp)) {
+        if (!$data = $this->getCache($tmp) OR !$cache) {
             $data = array();
 
             if (!empty($id)) {
                 $q = $this->modx->newQuery($this->classManager);
+                $q->leftJoin($this->classChat, $this->classChat,
+                    "{$this->classChat}.mid = {$this->classManager}.id");
                 $q->leftJoin($this->classModUser, $this->classModUser,
                     "{$this->classModUser}.id = {$this->classManager}.user");
                 $q->leftJoin($this->classModUserProfile, $this->classModUserProfile,
@@ -1487,6 +1533,7 @@ class modtelegram
 
                 $q->select($this->modx->getSelectColumns($this->classManager, $this->classManager, '', array(),
                     true));
+                $q->select("COUNT({$this->classChat}.mid) as chat_count");
                 $q->select($this->modx->getSelectColumns($this->classModUser, $this->classModUser, 'user_',
                     array('username'),
                     false));

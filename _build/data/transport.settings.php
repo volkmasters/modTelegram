@@ -20,7 +20,12 @@ $tmp = array(
         'area'  => 'modtelegram_main',
     ),
     'web_hook_action' => array(
-        'value' => 'action,login,logout,chatin,chatout,reply,history,status,location',
+        'value' => 'action,login,logout,chatin,chatout,reply,history,status,location,removeall',
+        'xtype' => 'textarea',
+        'area'  => 'modtelegram_main',
+    ),
+    'action_password' => array(
+        'value' => '000000',
         'xtype' => 'textarea',
         'area'  => 'modtelegram_main',
     ),
@@ -42,11 +47,6 @@ $tmp = array(
     ),
     'pusher_secret'     => array(
         'value' => 'f14dd376a3558f19c6b5',
-        'xtype' => 'textfield',
-        'area'  => 'modtelegram_pusher',
-    ),
-    'pusher_cluster' => array(
-        'value' => 'eu',
         'xtype' => 'textfield',
         'area'  => 'modtelegram_pusher',
     ),
